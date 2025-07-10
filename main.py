@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain.agents import create_tool_calling_agent, AgentExecutor
@@ -16,7 +16,7 @@ class ResearchResponse(BaseModel):
     tools_used: list[str]
     
 
-llm = ChatAnthropic(model="claude-3-5-sonnet-20241022")
+llm = ChatOpenAI(model="gpt-4o-mini")
 parser = PydanticOutputParser(pydantic_object=ResearchResponse)
 
 prompt = ChatPromptTemplate.from_messages(
@@ -44,7 +44,13 @@ agent = create_tool_calling_agent(
 
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 query = input("What can i help you research? ")
-raw_response = agent_executor.invoke({"query": query})
+import openai
+
+try:
+    raw_response = agent_executor.invoke({"query": query})
+except openai.error.RateLimitError:
+    print("OpenAI API rate limit exceeded. Please try again later or check your API quota.")
+    exit(1)
 
 try:
     structured_response = parser.parse(raw_response.get("output")[0]["text"])
