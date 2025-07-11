@@ -44,11 +44,11 @@ agent = create_tool_calling_agent(
 
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 query = input("What can i help you research? ")
-import openai
+from openai import RateLimitError
 
 try:
     raw_response = agent_executor.invoke({"query": query})
-except openai.error.RateLimitError:
+except RateLimitError:
     print("OpenAI API rate limit exceeded. Please try again later or check your API quota.")
     exit(1)
 
